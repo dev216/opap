@@ -6,7 +6,8 @@ class ProgramMenu:
 
     def __init__(self):
         self.options = { 0: "Get Last Draw",
-                         1: "Update Draws" }
+                         1: "Update Draws",
+                         2: "Print statistics"}
         self.options_count = len(self.options.keys())
 
     def validate_option(self, option_selected):
