@@ -53,7 +53,7 @@ def fetch_proto_draw(draw_number):
     conn.request("GET",request_str,None,{"Accept":"text\json"})
     last_draw_response = conn.getresponse()
     last_draw_data = last_draw_response.read().decode('utf-8')
-    lastdraw_json_data = json.loads(last_draw_data)
+    lastdraw_json_data = json.loads(last_draw_data.strip())
     conn.close()
     return lastdraw_json_data
     # print(draw_number)
@@ -94,7 +94,7 @@ def print_statistics(winning_columns):
         if four_digit_str not in winning_columns_4digit_parts_dict.keys():
             not_winning_columns_4digit_parts.append(four_digit_str)
 
-    print_not_winning_columns_4digit_parts(not_winning_columns_4digit_parts,4)
+    print_not_winning_columns_4digit_parts(not_winning_columns_4digit_parts,10)
 
     # winning_columns_statistics_len = len(winning_columns_4digit_parts_dict.keys())
     # remaining = winning_columns_statistics_len % 8
@@ -181,7 +181,7 @@ if __name__ == "__main__":
                 drawdat_fh = None
 
                 try:
-                    drawdat_fh = open("protodraws.csv","r+b")
+                    drawdat_fh = open("protodraws.csv")
                 except IOError:
                     print("'PROTO' draws' data CSV file does not exist.")
                     drawsfile_exists = False
@@ -193,37 +193,74 @@ if __name__ == "__main__":
                 reader = csv.reader(drawdat_fh)
                 draw_data = []
 
-                if reader.line_num > 0:
-                    for line in reader:
-                        draw_data.append(line)
+                for draw_row in reader:
+                    draw_data.append(draw_row)
+                last_available_draw_number =  int(draw_data[-1][0])
+                #print(int(last_available_draw_data[0]))
 
-                if drawdat_fh != None:
+                if int( last_available_draw_number < lastdraw_json_data['draw']['drawNo'] ):
+                    if drawdat_fh != None:
+                        drawdat_fh.close()
+                        drawdat_fh = open("protodraws.csv","a",newline='')
+                        writer = csv.writer(drawdat_fh)
+                        # print("Available 'PROTO' draws: {0}".format(len(draw_data)))
+                        tmp_counter = 0
+
+                        # for a_draw_num in range(-715,1,1):
+                        #     draw_json_data = fetch_proto_draw(a_draw_num)
+                        #     writer.writerow( draw_json_data_to_tuple(draw_json_data))
+                        #     tmp_counter += 1
+                        #     if tmp_counter == 250:
+                        #         time.sleep(5)
+                        #         tmp_counter = 0
+                        #
+                        # start_draw_num = len(draw_data) + 1
+                        # end_draw_num   = lastdraw_json_data['draw']['drawNo']
+                        # tmp_counter = 0
+
+                        for a_draw_num in range( (last_available_draw_number+1), (lastdraw_json_data['draw']['drawNo']) + 1, 1 ):
+                            draw_json_data = fetch_proto_draw(a_draw_num)
+                            writer.writerow( draw_json_data_to_tuple(draw_json_data))
+                            tmp_counter += 1
+                            if tmp_counter == 250:
+                                time.sleep(5)
+                                tmp_counter = 0
+                        drawdat_fh.close()
+                else:
                     drawdat_fh.close()
-                    drawdat_fh = open("protodraws.csv","a")
-                    writer = csv.writer(drawdat_fh)
-                    print("Available 'PROTO' draws: {0}".format(len(draw_data)))
-                    tmp_counter = 0
+                    print("Draws are already updated.")
 
-                    for a_draw_num in range(-715,1,1):
-                        draw_json_data = fetch_proto_draw(a_draw_num)
-                        writer.writerow( draw_json_data_to_tuple(draw_json_data))
-                        tmp_counter += 1
-                        if tmp_counter == 250:
-                            time.sleep(5)
-                            tmp_counter = 0
+                # if reader.line_num > 0:
+                #     for line in reader:
+                #         draw_data.append(line)
 
-                    start_draw_num = len(draw_data) + 1
-                    end_draw_num   = lastdraw_json_data['draw']['drawNo']
-                    tmp_counter = 0
-
-                    for a_draw_num in range(1,end_draw_num+1,1):
-                        draw_json_data = fetch_proto_draw(a_draw_num)
-                        writer.writerow( draw_json_data_to_tuple(draw_json_data))
-                        tmp_counter += 1
-                        if tmp_counter == 250:
-                            time.sleep(5)
-                            tmp_counter = 0
-                    drawdat_fh.close()
+                # if drawdat_fh != None:
+                #     drawdat_fh.close()
+                #     drawdat_fh = open("protodraws.csv","a")
+                #     writer = csv.writer(drawdat_fh)
+                #     print("Available 'PROTO' draws: {0}".format(len(draw_data)))
+                #     tmp_counter = 0
+                #
+                #     # for a_draw_num in range(-715,1,1):
+                #     #     draw_json_data = fetch_proto_draw(a_draw_num)
+                #     #     writer.writerow( draw_json_data_to_tuple(draw_json_data))
+                #     #     tmp_counter += 1
+                #     #     if tmp_counter == 250:
+                #     #         time.sleep(5)
+                #     #         tmp_counter = 0
+                #     #
+                #     # start_draw_num = len(draw_data) + 1
+                #     # end_draw_num   = lastdraw_json_data['draw']['drawNo']
+                #     # tmp_counter = 0
+                #     #
+                #     # for a_draw_num in range(1,end_draw_num+1,1):
+                #     #     draw_json_data = fetch_proto_draw(a_draw_num)
+                #     #     writer.writerow( draw_json_data_to_tuple(draw_json_data))
+                #     #     tmp_counter += 1
+                #     #     if tmp_counter == 250:
+                #     #         time.sleep(5)
+                #     #         tmp_counter = 0
+                #     drawdat_fh.close()
 
             elif action_num == 3:
                 drawdat_fh = open("protodraws.csv","r")
@@ -244,7 +281,6 @@ if __name__ == "__main__":
                 drawdat_fh.close()
                 print(len(winning_columns))
                 print_statistics(winning_columns)
-
             else:
                 print("SANITY CHECK ERROR")
     except SystemExit:
